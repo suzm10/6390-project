@@ -18,8 +18,3 @@ def test_app :=
 
 def main : IO Unit := do
   IO.println "Hello, Sailor!"
-  IO.println (repr (eval test_term))
-  IO.println (repr (eval test_if_then_else))
-  IO.println (repr (eval test_if_then_else2))
-  IO.println (repr (eval test_subst))
-  IO.println (repr (eval test_app))
