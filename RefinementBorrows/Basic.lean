@@ -67,13 +67,13 @@ inductive HasType (st : StoreTy) : TyCtx → Term → RTy → Prop where
 inductive Value : Term → Prop where
   | abs : ∀ x T₂ t₁,
       Value (Term.abs x T₂ t₁)
-  | true : Value Term.true
-  | false : Value Term.false
+  | true : Value .true
+  | false : Value .false
   | nat_const : ∀ n,
-      Value (Term.nat_const n)
+      Value (.nat_const n)
   | string_const : ∀ s,
-      Value (Term.string_const s)
-  | unit : Value Term.unit
+      Value (.string_const s)
+  | unit : Value .unit
 
 def owned : Ty → Prop
   | Ty.ref _ _ => False
@@ -168,4 +168,41 @@ inductive Multi {α : Type} (R : α → α → Prop) : α → α → Prop where
                   R a b →
                   Multi R b c →
                   Multi R a c
+
+theorem multi_R : ∀ (α : Type) (R : α → α → Prop) (a b : α),
+    R a b → (Multi R) a b
+  := by
+    intros α R a b hr
+    apply Multi.multi_step (b := b)
+    · exact hr
+    · apply Multi.multi_refl
+
+theorem multi_trans : ∀ (α : Type) (R : α → α → Prop) (a b c : α),
+    Multi R a b →
+    Multi R b c →
+    Multi R a c
+  := by
+    intros α R a b c hab hbc
+    induction hab with
+    | multi_refl a'  => exact hbc
+    | multi_step a' b' c' rab' rbc' ih => 
+      apply Multi.multi_step (b := b')
+      · exact rab'
+      · simp_all -- Here we have ih : R c c' -> R b c' and a term of type R c c'
+
+-- Here is an example of a "test"
+abbrev Multistep := Multi Step
+-- Unforunately, Lean does not have an `eapply` tactic which means our tests all look like this :(
+-- (or I'm not good enough at Lean, maybe Aristotle knows better, what a time to be alive)
+example : Multistep (.app (.abs "x" .nat (.nat_succ (.var "x"))) (.nat_const 2) , #[]) (.nat_const 3, #[]) := by
+  unfold Multistep
+  apply Multi.multi_step (.app (.abs "x" .nat (.nat_succ (.var "x"))) (.nat_const 2) , #[]) 
+    ((subst "x" (.nat_const 2) (.nat_succ (.var "x"))), #[])
+  · apply Step.eval_appabs "x" .nat (.nat_succ (.var "x")) (.nat_const 2)
+    · apply Value.nat_const
+  · simp [subst]
+    apply Multi.multi_step (b := ((.nat_const 3), #[]))
+    · apply Step.eval_succnat
+    · apply Multi.multi_refl
+
 
