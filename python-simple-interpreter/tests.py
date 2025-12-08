@@ -139,3 +139,26 @@ if __name__ == '__main__':
         ]]
     ]
     MyInterpreter(test, ('call', 'main', []))
+
+
+    print("\n=== regular borrow check (shared aliasing allowed) ===")
+    test = [
+        ['main', [], 'returns', 'i32', [
+            ('assign', 'x', 'i32', '5'),
+            ('assign', 'y1', '&shared i32', '&shared x'),
+            ('assign', 'y2', '&shared i32', '&shared x'),
+            ('return', '2') 
+        ]]
+    ]
+    MyInterpreter(test, ('call', 'main', []))
+
+    print("\n=== regular borrow check (mutable aliasing disallowed) ===")
+    test = [
+        ['main', [], 'returns', 'i32', [
+            ('assign', 'x', 'i32', '5'),
+            ('assign', 'y1', '&mut i32', '&mut x'),
+            ('assign', 'y2', '&mut i32', '&mut x'),
+            ('return', '2')
+        ]]
+    ]
+    MyInterpreter(test, ('call', 'main', []))
